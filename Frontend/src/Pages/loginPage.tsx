@@ -1,6 +1,6 @@
 // import Link from "next/link";
-import { Button } from "../Components/UI//button";
-import { Input } from "../Components/UI//input";
+import { Button } from "../Components/UI/button";
+import { Input } from "../Components/UI/input";
 import {
   Card,
   CardContent,
@@ -9,19 +9,21 @@ import {
   CardHeader,
   CardTitle,
 } from "../Components/UI/card";
+import { Link } from "react-router-dom";
 
-export default function SignupPage() {
+export default function LoginPage() {
   return (
     <div className="container flex items-center justify-center min-h-screen mx-auto">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign Up</CardTitle>
-          <CardDescription>Create a new account to get started</CardDescription>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form>
             <div className="space-y-4">
-              <Input name="name" placeholder="Full Name" required />
               <Input name="email" placeholder="Email" type="email" required />
               <Input
                 name="password"
@@ -29,23 +31,17 @@ export default function SignupPage() {
                 type="password"
                 required
               />
-              <Input
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                type="password"
-                required
-              />
               <Button type="submit" className="w-full">
-                Sign Up
+                Login
               </Button>
             </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p>
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
-              Login
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary hover:underline">
+              Sign up
             </Link>
           </p>
         </CardFooter>
