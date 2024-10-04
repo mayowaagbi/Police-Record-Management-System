@@ -1,24 +1,47 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "target": "ES2020", // Set target to a modern ECMAScript version
+    "lib": ["ES2020", "DOM", "DOM.Iterable"], // Include standard library, DOM, and DOM.Iterable for browser compatibility
+    "jsx": "react-jsx", // Use the new JSX transform for React 17+
+    "module": "ESNext", // Use ESNext for module resolution
+    "moduleResolution": "node", // Use Node.js-style module resolution
+    "strict": true, // Enable all strict type-checking options
+    "esModuleInterop": true, // Enables interoperability between CommonJS and ES modules
+    "allowSyntheticDefaultImports": true, // Allow default imports from modules with no default export
+    "skipLibCheck": true, // Skip type checking for all declaration files
+    "isolatedModules": true, // Ensures that each file can be safely transpiled without relying on other files
+    "noEmit": true, // No output from TypeScript compiler, let bundler handle it
+    "baseUrl": ".", // Set base URL for module resolution
+    "paths": {
+      // Setup path aliases
+      "@/*": ["src/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src"], // Include the 'src' directory for compilation
+  "exclude": ["node_modules", "dist"] // Exclude 'node_modules' and 'dist' from compilation
 }
+
+// {
+//   "compilerOptions": {
+//     "target": "ES2020",
+//     "useDefineForClassFields": true,
+//     "lib": ["ES2020", "DOM", "DOM.Iterable"],
+//     "module": "ESNext",
+//     "skipLibCheck": true,
+
+//     /* Bundler mode */
+//     "moduleResolution": "bundler",
+//     "allowImportingTsExtensions": true,
+//     "isolatedModules": true,
+//     "moduleDetection": "force",
+//     "noEmit": true,
+//     "jsx": "react-jsx",
+
+//     /* Linting */
+//     "strict": true,
+//     "noUnusedLocals": true,
+//     "noUnusedParameters": true,
+//     "noFallthroughCasesInSwitch": true
+//   },
+//   "include": ["src"]
+// }
