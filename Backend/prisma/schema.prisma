@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Criminal {
+  id             String       @id @default(uuid())
+  firstName      String
+  lastName       String
+  age            Int?
+  gender         String?
+  cases          Case[]       // This relation connects to the Case model
+}
+
+model Case {
+  id               String         @id @default(uuid())
+  caseNumber       String         @unique
+  description      String
+  status           String
+  criminalId       String
+  criminal         Criminal       @relation(fields: [criminalId], references: [id])
+  updates          CaseUpdate[]
+  investigatorId   String
+  investigator     Investigator    @relation(fields: [investigatorId], references: [id])
+}
+
+model CaseUpdate {
+  id          String    @id @default(uuid())
+  case       Case      @relation(fields: [caseId], references: [id])
+  caseId     String
+  updateTime DateTime  @default(now())
+  description String
+}
+
+model Investigator {
+  id            String    @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  phone         String?
+  gender        String?
+  age           Int?
+  numberOfCases Int       @default(0)
+  createdAt     DateTime  @default(now())
+  cases         Case[]    // Relation to the Case model
+}
