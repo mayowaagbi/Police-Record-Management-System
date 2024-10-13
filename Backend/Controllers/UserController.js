@@ -54,6 +54,12 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
+  // Example request body:
+  // {
+  //   "email": "johndoe@example.com",
+  //   "password": "password123"
+  // }
+
   // Validate required fields
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
@@ -78,8 +84,16 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password." });
     }
 
-    // If password is valid, return user data or a token
-    res.status(200).json({ message: "Login successful", user: existingUser });
+    // If password is valid, return user data
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        id: existingUser.id,
+        firstName: existingUser.firstName,
+        lastName: existingUser.lastName,
+        email: existingUser.email,
+      },
+    });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ error: "An error occurred while logging in." });
