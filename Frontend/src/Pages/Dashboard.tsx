@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Input } from "../Components/UI/input";
 import { Button } from "../Components/UI/button";
+import { DashboardNavbar } from "../Components/dashboardNavBar";
+import NewEntryForm from "../Components/NewEntryForm";
 import {
   Table,
   TableBody,
@@ -90,6 +92,15 @@ export default function FilterableDashboard() {
   const handleNewEntryChange = (column: string, value: string) => {
     setNewEntry((prev) => ({ ...prev, [column]: value }));
   };
+  // const addNewEntry = (newEntry: any) => {
+  //   setData((prev) => [
+  //     ...prev,
+  //     {
+  //       caseId: Number(newEntry.caseId),
+  //       ...newEntry,
+  //     },
+  //   ]);
+  // };
 
   const addNewEntry = () => {
     if (
@@ -110,8 +121,10 @@ export default function FilterableDashboard() {
       ]);
       setNewEntry({
         caseId: "",
-        suspectName: "",
-        officerName: "",
+        suspectfirstName: "",
+        suspectlastName: "",
+        officerfirstame: "",
+        officerlastname: "",
         interrogationDate: "",
         role: "",
         location: "",
@@ -143,8 +156,9 @@ export default function FilterableDashboard() {
   });
 
   return (
-    <div className="max-w-[100%] bg-black h-screen">
-      <Card>
+    <div className="max-w-[100%] h-screen">
+      <DashboardNavbar />
+      <Card className="rounded-none border-0">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Data Table</CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -163,7 +177,7 @@ export default function FilterableDashboard() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-4 py-4">
+              {/* <div className="grid gap-4 py-4">
                 {columns.map((column) => (
                   <div
                     key={column}
@@ -182,10 +196,15 @@ export default function FilterableDashboard() {
                     />
                   </div>
                 ))}
-              </div>
-              <DialogFooter>
+              </div> */}
+
+              <NewEntryForm
+                onAddEntry={addNewEntry}
+                onClose={() => setIsDialogOpen(false)}
+              />
+              {/* <DialogFooter>
                 <Button onClick={addNewEntry}>Add Entry</Button>
-              </DialogFooter>
+              </DialogFooter> */}
             </DialogContent>
           </Dialog>
         </CardHeader>

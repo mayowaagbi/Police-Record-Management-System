@@ -1,21 +1,22 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
-
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
+// const jwtSecret = env(JWT_SECRET);
+JWT_SECRET = "e8f3b2d45a7c8e3f9a6b5c1d9f0a2d3b";
 const registerUser = async (req, res) => {
-  // Log the incoming request body
   console.log("Incoming request body:", req.body);
 
   const { firstName, lastName, password, email } = req.body;
 
-  // Validate required fields
   if (!firstName || !lastName || !email || !password) {
     console.log("Validation failed: All fields are required.");
     return res.status(400).json({ error: "All fields are required." });
   }
 
   try {
-    // Check for existing user
     const existingUser = await prisma.investigator.findUnique({
       where: { email },
     });
@@ -27,11 +28,9 @@ const registerUser = async (req, res) => {
         .json({ error: "User with this email already exists." });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Hashed password:", hashedPassword);
 
-    // Create new user
     const newUser = await prisma.investigator.create({
       data: {
         firstName,
@@ -51,16 +50,64 @@ const registerUser = async (req, res) => {
   }
 };
 
+// const loginUser = async (req, res) => {
+//   const { email, password } = req.body;
+
+//   if (!email || !password) {
+//     return res.status(400).json({ error: "Email and password are required." });
+//   }
+
+//   try {
+//     const existingUser = await prisma.investigator.findUnique({
+//       where: { email },
+//     });
+
+//     if (!existingUser) {
+//       return res.status(401).json({ error: "Invalid email or password." });
+//     }
+
+//     const isPasswordValid = await bcrypt.compare(
+//       password,
+//       existingUser.password
+//     );
+
+//     if (!isPasswordValid) {
+//       return res.status(401).json({ error: "Invalid  password." });
+//     }
+//     // Generate a token
+//     const token = jwt.sign(
+//       { userId: existingUser.id },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+//     console.log("Generated Token:", token); // Debugging log
+
+//     // Set the token as an HTTP-only cookie
+//     res.cookie("token", token, {
+//       httpOnly: true,
+//       secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+//       maxAge: 3600000, // 1 hour in milliseconds
+//       sameSite: "Strict", // Mitigates CSRF attacks
+//     });
+
+//     res.status(200).json({
+//       message: "Login successful",
+//       user: {
+//         id: existingUser.id,
+//         firstName: existingUser.firstName,
+//         lastName: existingUser.lastName,
+//         email: existingUser.email,
+//       },
+//       token,
+//     });
+//   } catch (error) {
+//     console.error("Error during login:", error);
+//     res.status(500).json({ error: "An error occurred while logging in." });
+//   }
+// };
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  // Example request body:
-  // {
-  //   "email": "johndoe@example.com",
-  //   "password": "password123"
-  // }
-
-  // Validate required fields
   if (!email || !password) {
     return res.status(400).json({ error: "Email and password are required." });
   }
@@ -70,7 +117,6 @@ const loginUser = async (req, res) => {
       where: { email },
     });
 
-    // Check if user exists
     if (!existingUser) {
       return res.status(401).json({ error: "Invalid email or password." });
     }
@@ -79,12 +125,27 @@ const loginUser = async (req, res) => {
       password,
       existingUser.password
     );
-
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password." });
+      return res.status(401).json({ error: "Invalid password." });
     }
 
-    // If password is valid, return user data
+    const token = jwt.sign(
+      { userId: existingUser.id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+    console.log(process.env.JWT_SECRET);
+    console.log("Generated Token:", token);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      maxAge: 3600000,
+      sameSite: "Strict",
+    });
+
     res.status(200).json({
       message: "Login successful",
       user: {
@@ -100,4 +161,68 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const getCriminal = async (req, res) => {
+  try {
+    const criminals = await prisma.criminal.findMany();
+    res.status(200).json(criminals);
+  } catch (error) {
+    console.error("Error fetching criminals:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching criminals." });
+  }
+};
+
+const addCriminal = async (req, res) => {
+  const { firstName, lastName, crime } = req.body;
+
+  if (!firstName || !lastName || !crime) {
+    return res.status(400).json({ error: "All fields are required." });
+  }
+
+  try {
+    const newCriminal = await prisma.criminal.create({
+      data: {
+        firstName,
+        lastName,
+        crime,
+      },
+    });
+
+    res.status(201).json(newCriminal);
+  } catch (error) {
+    console.error("Error adding criminal:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while adding the criminal." });
+  }
+};
+
+const getInvestigatorById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const investigator = await prisma.investigator.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!investigator) {
+      return res.status(404).json({ error: "Investigator not found." });
+    }
+
+    res.status(200).json(investigator);
+  } catch (error) {
+    console.error("Error fetching investigator:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching the investigator." });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getCriminal,
+  addCriminal,
+  getInvestigatorById,
+};
