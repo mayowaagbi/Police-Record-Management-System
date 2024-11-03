@@ -6,6 +6,12 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+enum Role {
+  Witness
+  Suspect
+  Victim
+  Informant
+}
 
 model Criminal {
   id             String       @id @default(uuid())
@@ -25,9 +31,9 @@ model Case {
   criminal         Criminal       @relation(fields: [criminalId], references: [id])
   updates          CaseUpdate[]
   investigatorId   String
-  investigator     Investigator    @relation(fields: [investigatorId], references: [id])
+  investigator     Investigator   @relation(fields: [investigatorId], references: [id])
+  role             Role           // Add the Role enum here
 }
-
 model CaseUpdate {
   id          String    @id @default(uuid())
   case       Case      @relation(fields: [caseId], references: [id])
