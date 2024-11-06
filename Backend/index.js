@@ -1,6 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const UserRoutes = require("./Routes/UserRoute");
+const CaseRoutes = require("./Routes/CaseRoutes");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -24,6 +25,7 @@ app.use(cors(corsOptions)); // Only apply the configured CORS options here
 
 // Routes
 app.use("/users", UserRoutes);
+app.use("/cases", CaseRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -9,7 +9,7 @@ JWT_SECRET = "e8f3b2d45a7c8e3f9a6b5c1d9f0a2d3b";
 const registerUser = async (req, res) => {
   console.log("Incoming request body:", req.body);
 
-  const { firstName, lastName, password, email } = req.body;
+  const { firstName, lastName, password, email } = req.body.data; // Access data from the "data" field
 
   if (!firstName || !lastName || !email || !password) {
     console.log("Validation failed: All fields are required.");
@@ -49,62 +49,6 @@ const registerUser = async (req, res) => {
       .json({ error: "An error occurred while registering the user." });
   }
 };
-
-// const loginUser = async (req, res) => {
-//   const { email, password } = req.body;
-
-//   if (!email || !password) {
-//     return res.status(400).json({ error: "Email and password are required." });
-//   }
-
-//   try {
-//     const existingUser = await prisma.investigator.findUnique({
-//       where: { email },
-//     });
-
-//     if (!existingUser) {
-//       return res.status(401).json({ error: "Invalid email or password." });
-//     }
-
-//     const isPasswordValid = await bcrypt.compare(
-//       password,
-//       existingUser.password
-//     );
-
-//     if (!isPasswordValid) {
-//       return res.status(401).json({ error: "Invalid  password." });
-//     }
-//     // Generate a token
-//     const token = jwt.sign(
-//       { userId: existingUser.id },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1h" }
-//     );
-//     console.log("Generated Token:", token); // Debugging log
-
-//     // Set the token as an HTTP-only cookie
-//     res.cookie("token", token, {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-//       maxAge: 3600000, // 1 hour in milliseconds
-//       sameSite: "Strict", // Mitigates CSRF attacks
-//     });
-
-//     res.status(200).json({
-//       message: "Login successful",
-//       user: {
-//         id: existingUser.id,
-//         firstName: existingUser.firstName,
-//         lastName: existingUser.lastName,
-//         email: existingUser.email,
-//       },
-//       token,
-//     });
-//   } catch (error) {
-//     console.error("Error during login:", error);
-//     res.status(500).json({ error: "An error occurred while logging in." });
-//   }
-// };
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -129,30 +73,37 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ error: "Invalid password." });
     }
 
+    // Generate a token
     const token = jwt.sign(
       { userId: existingUser.id },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
-    console.log(process.env.JWT_SECRET);
-    console.log("Generated Token:", token);
+    const userdata = {
+      id: existingUser.id,
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
+      role: existingUser.role,
+      email: existingUser.email,
+    };
 
-    res.cookie("token", token, {
+    // Set the token as a cookie
+    res.cookie("user", userdata, {
       httpOnly: true,
-      secure: false,
-      maxAge: 3600000,
-      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Lax",
     });
 
+    // Send only one JSON response
     res.status(200).json({
       message: "Login successful",
+      token, // Optional, if you want to use it on the front end without cookies
       user: {
         id: existingUser.id,
         firstName: existingUser.firstName,
         lastName: existingUser.lastName,
         email: existingUser.email,
+        role: existingUser.role,
       },
     });
   } catch (error) {
@@ -160,7 +111,6 @@ const loginUser = async (req, res) => {
     res.status(500).json({ error: "An error occurred while logging in." });
   }
 };
-
 const getCriminal = async (req, res) => {
   try {
     const criminals = await prisma.criminal.findMany();

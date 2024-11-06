@@ -38,6 +38,11 @@ export default function LoginPage() {
       );
 
       console.log("Login Successful:", response.data);
+      localStorage.setItem("id", response.data?.user?.id);
+      localStorage.setItem("firstname", response.data?.user?.firstName);
+      localStorage.setItem("lastname", response.data?.user?.lastName);
+      localStorage.setItem("email", response.data?.user?.email);
+      localStorage.setItem("role", response.data?.user?.role);
 
       // Set token as a cookie if received
       if (response.data.token) {

@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { Input } from "./UI/input";
 import { Button } from "./UI/button";
 import { Textarea } from "./UI/textarea";
+import Cookies from "js-cookie";
+import axios from "axios";
 import {
   Form,
   FormControl,
@@ -18,82 +20,136 @@ interface NewEntryFormProps {
 }
 
 const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
-  // const { control, handleSubmit, reset } = useForm();
-  const form = useForm();
+  const [first, setFirst] = useState("");
+  const [second, setSecond] = useState("");
+  const [userIds, setuserId] = useState("");
   const [newEntry, setNewEntry] = useState({
-    caseId: "",
+    userId: "",
     suspectFirstName: "",
     suspectLastName: "",
     officerFirstName: "",
     officerLastName: "",
     suspectRole: "",
     caseDescription: "",
-    files: "",
+    files: null as File | null, // Explicitly set the type to FileList | null
     location: "",
   });
 
-  const handleChange = (field: string, value: string) => {
-    setNewEntry((prev) => ({ ...prev, [field]: value }));
-  };
+  const form = useForm({
+    defaultValues: newEntry,
+  });
 
-  const onSubmit = () => {
-    if (
-      newEntry.caseId &&
-      newEntry.suspectFirstName &&
-      newEntry.suspectLastName &&
-      newEntry.officerFirstName &&
-      newEntry.officerLastName &&
-      newEntry.suspectRole &&
-      newEntry.caseDescription &&
-      newEntry.files
-    ) {
-      onAddEntry(newEntry);
-      form.reset();
-      onClose();
-    }
-  };
-  const suspectRoles = ["Witness", "Suspect", "Victim", "Informant"];
+  // Fetch and set location and user data on load
   useEffect(() => {
+    const firstName = localStorage.getItem("firstname");
+    const lastName = localStorage.getItem("lastname");
+    const userId = localStorage.getItem("id");
+
+    if (firstName && lastName && userId) {
+      setFirst(firstName);
+      setSecond(lastName);
+      setuserId(userId);
+
+      setNewEntry((prev) => ({
+        ...prev,
+        userId: userId,
+        officerFirstName: firstName,
+        officerLastName: lastName,
+      }));
+
+      form.reset({
+        ...form.getValues(),
+        userId: userId,
+        officerFirstName: firstName,
+        officerLastName: lastName,
+      });
+    }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setNewEntry((prev) => ({
-          ...prev,
-          location: `Lat: ${latitude}, Lon: ${longitude}`,
-        }));
+        const location = `Lat: ${latitude}, Lon: ${longitude}`;
+        setNewEntry((prev) => ({ ...prev, location }));
+        form.setValue("location", location);
       },
       (error) => {
         console.error("Error retrieving location:", error);
       }
     );
-  }, []);
+  }, [form]);
+
+  const onSubmit = async (data: any) => {
+    const formData = new FormData();
+    const userId = localStorage.getItem("id");
+    console.log("Form Data:", data);
+
+    // Append data to FormData
+    Object.keys(data).forEach((key) => {
+      if (key === "files" && data.files) {
+        formData.append("files", data.files[0]); // Append single file
+      } else {
+        formData.append(key, data[key]);
+      }
+    });
+
+    // Append userId to FormData
+    formData.append("userId", userId);
+
+    try {
+      // const token = Cookies.get("token");
+      // if (!token) {
+      //   throw new Error("No token found in cookies");
+      // }
+
+      const response = await axios.post(
+        "http://localhost:3000/cases/addcases",
+        formData,
+        {
+          headers: {
+            // Authorization: `Bearer ${token}`, // Use token from cookies
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
+      console.log("Success:", response.data);
+      onAddEntry(response.data);
+      form.reset();
+      onClose();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
+  };
+
+  const suspectRoles = ["Witness", "Suspect", "Victim", "Informant"];
 
   return (
     <div className="grid gap-4 py-4 w-full">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 overflow-y-auto h-96 "
+          className="space-y-8 overflow-y-auto h-96"
         >
-          {/* <FormField
+          <FormField
             control={form.control}
-            name="caseId"
+            name="userId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Case ID</FormLabel>
+                <FormLabel>Inspector ID</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="Enter Case ID"
                     {...field}
-                    value={newEntry.caseId}
-                    onChange={(e) => handleChange("caseId", e.target.value)}
+                    disabled
+                    value={userIds || ""}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          /> */}
-
+          />
+          {/* Suspect First Name */}
           <FormField
             control={form.control}
             name="suspectFirstName"
@@ -101,20 +157,14 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
               <FormItem>
                 <FormLabel>Suspect First Name</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Enter Suspect First Name"
-                    {...field}
-                    value={newEntry.suspectFirstName}
-                    onChange={(e) =>
-                      handleChange("suspectFirstName", e.target.value)
-                    }
-                  />
+                  <Input placeholder="Enter Suspect First Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Suspect Last Name */}
           <FormField
             control={form.control}
             name="suspectLastName"
@@ -122,20 +172,14 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
               <FormItem>
                 <FormLabel>Suspect Last Name</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Enter Suspect Last Name"
-                    {...field}
-                    value={newEntry.suspectLastName}
-                    onChange={(e) =>
-                      handleChange("suspectLastName", e.target.value)
-                    }
-                  />
+                  <Input placeholder="Enter Suspect Last Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Officer First Name */}
           <FormField
             control={form.control}
             name="officerFirstName"
@@ -144,12 +188,9 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                 <FormLabel>Officer First Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Officer First Name"
                     {...field}
-                    value={newEntry.officerFirstName}
-                    onChange={(e) =>
-                      handleChange("officerFirstName", e.target.value)
-                    }
+                    placeholder="Officer First Name"
+                    value={first || ""}
                     disabled
                   />
                 </FormControl>
@@ -158,6 +199,7 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
             )}
           />
 
+          {/* Officer Last Name */}
           <FormField
             control={form.control}
             name="officerLastName"
@@ -166,12 +208,9 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                 <FormLabel>Officer Last Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Officer Last Name"
                     {...field}
-                    value={newEntry.officerLastName}
-                    onChange={(e) =>
-                      handleChange("officerLastName", e.target.value)
-                    }
+                    placeholder="Officer Last Name"
+                    value={second || ""}
                     disabled
                   />
                 </FormControl>
@@ -180,6 +219,7 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
             )}
           />
 
+          {/* Suspect Role */}
           <FormField
             control={form.control}
             name="suspectRole"
@@ -187,17 +227,8 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
               <FormItem>
                 <FormLabel>Suspect Role</FormLabel>
                 <FormControl>
-                  <select
-                    {...field}
-                    value={newEntry.suspectRole}
-                    onChange={(e) =>
-                      handleChange("suspectRole", e.target.value)
-                    }
-                    className="border rounded-md p-2  w-full"
-                  >
-                    <option className="" value="">
-                      Select Role
-                    </option>
+                  <select {...field} className="border rounded-md p-2 w-full">
+                    <option value="">Select Role</option>
                     {suspectRoles.map((role) => (
                       <option key={role} value={role}>
                         {role}
@@ -210,6 +241,7 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
             )}
           />
 
+          {/* Location */}
           <FormField
             control={form.control}
             name="location"
@@ -217,19 +249,14 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
               <FormItem>
                 <FormLabel>Location</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Location"
-                    {...field}
-                    value={newEntry.location}
-                    disabled
-                    className="bg-gray-200"
-                  />
+                  <Input {...field} placeholder="Location" disabled />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Case Description */}
           <FormField
             control={form.control}
             name="caseDescription"
@@ -237,20 +264,14 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
               <FormItem>
                 <FormLabel>Case Description</FormLabel>
                 <FormControl>
-                  <Textarea
-                    placeholder="Enter Case Description"
-                    {...field}
-                    value={newEntry.caseDescription}
-                    onChange={(e) =>
-                      handleChange("caseDescription", e.target.value)
-                    }
-                  />
+                  <Textarea placeholder="Enter Case Description" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
+          {/* Files */}
           <FormField
             control={form.control}
             name="files"
@@ -259,10 +280,12 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                 <FormLabel>Files</FormLabel>
                 <FormControl>
                   <Input
-                    type="file" // Change to type "file" if uploading files
-                    placeholder="Upload files"
-                    {...field}
-                    onChange={(e) => handleChange("files", e.target.value)}
+                    type="file"
+                    placeholder="Upload a file"
+                    onChange={(e) => {
+                      const file = e.target.files ? e.target.files[0] : null; // Use the first file only
+                      form.setValue("files", file); // Update with only one file
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

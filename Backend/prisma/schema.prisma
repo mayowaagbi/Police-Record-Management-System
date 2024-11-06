@@ -12,27 +12,36 @@ enum Role {
   Victim
   Informant
 }
-
+enum Userrole {
+  ADMIN
+  INVESTIGATOR
+}
 model Criminal {
-  id             String       @id @default(uuid())
+  id             String   @id @default(uuid())
   firstName      String
   lastName       String
   age            Int?
   gender         String?
-  cases          Case[]       // This relation connects to the Case model
+  cases          Case[]   // This relation connects to the Case model
 }
 
 model Case {
-  id               String         @id @default(uuid())
-  caseNumber       String         @unique
-  description      String
-  status           String
-  criminalId       String
-  criminal         Criminal       @relation(fields: [criminalId], references: [id])
+  id               String       @id @default(uuid())
+  suspectFirstName String
+  suspectLastName  String
+  officerFirstName String
+  officerLastName  String
+  caseDescription  String
+  location         String
+  fileUrl          String?
   updates          CaseUpdate[]
-  investigatorId   String
-  investigator     Investigator   @relation(fields: [investigatorId], references: [id])
-  role             Role           // Add the Role enum here
+  suspectRole       Role
+  criminalId       String       // Foreign key for Criminal
+  criminal         Criminal     @relation(fields: [criminalId], references: [id])
+  investigatorId   String       // Foreign key for Investigator
+  investigator     Investigator @relation(fields: [investigatorId], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 }
 model CaseUpdate {
   id          String    @id @default(uuid())
@@ -48,10 +57,11 @@ model Investigator {
   lastName      String
   email         String    @unique
   password      String
+  role          Userrole     @default(INVESTIGATOR)
   phone         String?
   gender        String?
   age           Int?
   numberOfCases Int       @default(0)
   createdAt     DateTime  @default(now())
-  cases         Case[]    // Relation to the Case model
+  cases         Case[]   
 }

@@ -26,16 +26,38 @@ export default function SignupPage() {
   const navigate = useNavigate(); // Initialize useNavigate
   const form = useForm(); // Initialize useForm
 
+  // const onSubmit = async (data) => {
+  //   try {
+  //     const response = await axios.post(
+  //       "http://localhost:3000/users/register",
+  //       data // Use data from the form submission
+  //     );
+  //     console.log(response.data); // Handle response data if needed
+
+  //     // Redirect to login page on successful signup
+  //     // navigate("/");
+  //   } catch (error) {
+  //     console.error("Signup error:", error); // Handle errors as needed
+  //     // Optionally display an error message to the user
+  //   }
+  // };
   const onSubmit = async (data) => {
     try {
+      const role = localStorage.getItem("role"); // Or fetch from local storage as appropriate
+
       const response = await axios.post(
         "http://localhost:3000/users/register",
-        data // Use data from the form submission
+        { data, role }, // Send both data and role as part of the body
+        {
+          headers: {
+            "x-user-role": role, // Ensure the role is sent in the headers
+          },
+        }
       );
-      console.log(response.data); // Handle response data if needed
 
-      // Redirect to login page on successful signup
-      navigate("/");
+      console.log(response.data); // Handle response data if needed
+      alert("Investigator Registered Successfully");
+      navigate("/Dashboard"); // Redirect to login page on successful signup
     } catch (error) {
       console.error("Signup error:", error); // Handle errors as needed
       // Optionally display an error message to the user
@@ -46,8 +68,7 @@ export default function SignupPage() {
     <div className="container flex items-center justify-center min-h-screen mx-auto">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign Up</CardTitle>
-          <CardDescription>Create a new account to get started</CardDescription>
+          <CardTitle>INVESTIGATOR</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -143,14 +164,14 @@ export default function SignupPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex justify-center">
+        {/* <CardFooter className="flex justify-center">
           <p>
             Already have an account?{" "}
             <Link to="/" className="text-primary hover:underline">
               Login
             </Link>
           </p>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );
