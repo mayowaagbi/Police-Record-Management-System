@@ -3,8 +3,6 @@ import { useForm } from "react-hook-form";
 import { Input } from "./UI/input";
 import { Button } from "./UI/button";
 import { Textarea } from "./UI/textarea";
-import Cookies from "js-cookie";
-import axios from "axios";
 import {
   Form,
   FormControl,
@@ -13,112 +11,84 @@ import {
   FormLabel,
   FormMessage,
 } from "./UI/form";
+import axios from "axios";
 
-interface NewEntryFormProps {
-  onAddEntry: (newEntry: any) => void;
+interface CaseUpdateData {
+  caseId: string;
+  suspectFirstName: string;
+  suspectLastName: string;
+  officerFirstName: string;
+  officerLastName: string;
+  suspectRole: string;
+  caseDescription: string;
+  files: File | null;
+  location: string;
+  investigatorId: string;
+}
+
+interface UpdateEntryFormProps {
+  caseData: CaseUpdateData;
+  onUpdateEntry: (updatedEntry: CaseUpdateData) => void;
   onClose: () => void;
 }
 
-const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
-  const [first, setFirst] = useState("");
-  const [second, setSecond] = useState("");
-  const [userIds, setuserId] = useState("");
-  const [newEntry, setNewEntry] = useState({
-    userId: "",
-    suspectFirstName: "",
-    suspectLastName: "",
-    officerFirstName: "",
-    officerLastName: "",
-    suspectRole: "",
-    caseDescription: "",
-    files: null as File | null, // Explicitly set the type to FileList | null
-    location: "",
-  });
+const UpdateEntryForm: React.FC<UpdateEntryFormProps> = ({
+  caseData,
+  onUpdateEntry,
+  onClose,
+}) => {
+  const [originalData, setOriginalData] = useState<CaseUpdateData>(caseData);
 
   const form = useForm({
-    defaultValues: newEntry,
+    defaultValues: caseData, // Prepopulate the form with caseData
   });
 
-  // Fetch and set location and user data on load
-  useEffect(() => {
-    const firstName = localStorage.getItem("firstname");
-    const lastName = localStorage.getItem("lastname");
-    const userId = localStorage.getItem("id");
-
-    if (firstName && lastName && userId) {
-      setFirst(firstName);
-      setSecond(lastName);
-      setuserId(userId);
-
-      setNewEntry((prev) => ({
-        ...prev,
-        userId: userId,
-        officerFirstName: firstName,
-        officerLastName: lastName,
-      }));
-
-      form.reset({
-        ...form.getValues(),
-        userId: userId,
-        officerFirstName: firstName,
-        officerLastName: lastName,
-      });
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const location = `Lat: ${latitude}, Lon: ${longitude}`;
-        setNewEntry((prev) => ({ ...prev, location }));
-        form.setValue("location", location);
-      },
-      (error) => {
-        console.error("Error retrieving location:", error);
-      }
-    );
-  }, [form]);
-
-  const onSubmit = async (data: any) => {
-    const formData = new FormData();
-    const userId = localStorage.getItem("id");
-    console.log("Form Data:", data);
-
-    // Append data to FormData
-    Object.keys(data).forEach((key) => {
-      if (key === "files" && data.files) {
-        formData.append("files", data.files[0]); // Append single file
-      } else {
-        formData.append(key, data[key]);
-      }
-    });
-
-    // Append userId to FormData
-    formData.append("userId", userId);
-
+  // Handle form submission
+  const onSubmit = async (data: CaseUpdateData) => {
+    console.log("updates", data);
     try {
-      // const token = Cookies.get("token");
-      // if (!token) {
-      //   throw new Error("No token found in cookies");
-      // }
+      // Ensure we have the original data available
+      if (!originalData) {
+        console.error("Original data is not available");
+        return;
+      }
 
-      const response = await axios.post(
-        "http://localhost:3000/cases/addcases",
-        formData,
+      // Prepare the updated data by merging originalData and updated fields
+      const updatedData = Object.keys(data).reduce((acc, key) => {
+        // If the field is dirty (changed), add it to the updated data
+        if (form.formState.dirtyFields[key]) {
+          acc[key] = data[key];
+        } else {
+          // If the field is not dirty (unchanged), use the original value
+          acc[key] = originalData[key];
+        }
+        return acc;
+      }, {} as CaseUpdateData);
+
+      console.log("updatedData", updatedData);
+
+      // Send the updated data to the backend (replace with your API endpoint)
+      const response = await axios.put(
+        `http://localhost:3000/cases/updatecases/${data.caseId}`,
+        updatedData,
         {
           headers: {
-            // Authorization: `Bearer ${token}`, // Use token from cookies
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
+            "x-user-role": "ADMIN",
           },
-          withCredentials: true,
         }
       );
 
-      console.log("Success:", response.data);
-      onAddEntry(response.data);
-      form.reset();
-      onClose();
+      if (response.status === 200) {
+        // If update is successful, notify parent component and close the form
+        onUpdateEntry(updatedData);
+        onClose();
+      } else {
+        throw new Error("Failed to update the case");
+      }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error updating case:", error);
+      // Optionally, handle error state here
     }
   };
 
@@ -131,18 +101,19 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-8 overflow-y-auto h-96"
         >
+          {/* Inspector ID */}
           <FormField
             control={form.control}
-            name="userId"
+            name="investigatorId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel> ID</FormLabel>
+                <FormLabel>Inspector ID</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Enter Case ID"
                     {...field}
                     disabled
-                    value={userIds || ""}
+                    placeholder="Inspector ID"
+                    value={caseData.investigatorId || ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -189,9 +160,9 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Officer First Name"
-                    value={first || ""}
                     disabled
+                    value={caseData.officerFirstName || ""}
+                    placeholder="Officer First Name"
                   />
                 </FormControl>
                 <FormMessage />
@@ -209,9 +180,9 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Officer Last Name"
-                    value={second || ""}
                     disabled
+                    value={caseData.officerLastName || ""}
+                    placeholder="Officer Last Name"
                   />
                 </FormControl>
                 <FormMessage />
@@ -283,8 +254,8 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
                     type="file"
                     placeholder="Upload a file"
                     onChange={(e) => {
-                      const file = e.target.files ? e.target.files[0] : null; // Use the first file only
-                      form.setValue("files", file); // Update with only one file
+                      const file = e.target.files ? e.target.files[0] : null;
+                      form.setValue("files", file);
                     }}
                   />
                 </FormControl>
@@ -294,7 +265,7 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
           />
 
           <Button type="submit" className="w-full">
-            Add Entry
+            Save Changes
           </Button>
         </form>
       </Form>
@@ -302,4 +273,4 @@ const NewEntryForm: React.FC<NewEntryFormProps> = ({ onAddEntry, onClose }) => {
   );
 };
 
-export default NewEntryForm;
+export default UpdateEntryForm;

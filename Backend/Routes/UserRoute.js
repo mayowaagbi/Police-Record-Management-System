@@ -21,7 +21,7 @@ const verifyAdmin = (req, res, next) => {
 
   next(); // Proceed to the next middleware or route handler
 };
-router.post("/register", verifyAdmin, registerUser);
+router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/crimmal", addCriminal);
 router.get("/getcrimmal", getCriminal);

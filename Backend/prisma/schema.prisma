@@ -6,22 +6,30 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
 enum Role {
   Witness
   Suspect
   Victim
   Informant
 }
+
 enum Userrole {
   ADMIN
   INVESTIGATOR
 }
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
 model Criminal {
   id             String   @id @default(uuid())
   firstName      String
   lastName       String
   age            Int?
-  gender         String?
+  gender         Gender?
   cases          Case[]   // This relation connects to the Case model
 }
 
@@ -35,7 +43,7 @@ model Case {
   location         String
   fileUrl          String?
   updates          CaseUpdate[]
-  suspectRole       Role
+  suspectRole      Role
   criminalId       String       // Foreign key for Criminal
   criminal         Criminal     @relation(fields: [criminalId], references: [id])
   investigatorId   String       // Foreign key for Investigator
@@ -43,11 +51,12 @@ model Case {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 }
+
 model CaseUpdate {
   id          String    @id @default(uuid())
-  case       Case      @relation(fields: [caseId], references: [id])
-  caseId     String
-  updateTime DateTime  @default(now())
+  case        Case      @relation(fields: [caseId], references: [id])
+  caseId      String
+  updateTime  DateTime  @default(now())
   description String
 }
 
@@ -57,10 +66,10 @@ model Investigator {
   lastName      String
   email         String    @unique
   password      String
-  role          Userrole     @default(INVESTIGATOR)
+  role          Userrole  @default(INVESTIGATOR)
   phone         String?
-  gender        String?
-  age           Int?
+  gender        Gender?
+  dob           DateTime?
   numberOfCases Int       @default(0)
   createdAt     DateTime  @default(now())
   cases         Case[]   

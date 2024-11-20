@@ -5,6 +5,8 @@ const {
   addCase,
   updateCase,
   deleteCase,
+  getGenderRatio,
+  getMonthlyCases,
 } = require("../Controllers/CaseController");
 const multer = require("multer");
 const path = require("path");
@@ -26,6 +28,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 const verifyAdmin = (req, res, next) => {
   // Get the role from the request header (sent by the client)
+  console.log("Request Headers:", req.headers);
   const userRole = req.headers["x-user-role"];
 
   if (!userRole) {
@@ -41,7 +44,9 @@ const verifyAdmin = (req, res, next) => {
 
 router.get("/getcases", getCases);
 router.post("/addcases", upload.single("files"), addCase);
-router.put("/cases/:id", updateCase);
-router.delete("/cases/:id", verifyAdmin, deleteCase);
+router.put("/updatecases/:id", verifyAdmin, updateCase);
+router.delete("/deletecases/:id", verifyAdmin, deleteCase);
+router.get("/gender-ratio", getGenderRatio);
+router.get("/monthly-cases", getMonthlyCases);
 
 module.exports = router;

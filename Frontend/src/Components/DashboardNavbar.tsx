@@ -10,6 +10,11 @@ import {
 
 export function DashboardNavbar() {
   const userRole = localStorage.getItem("role");
+  const handleLogout = () => {
+    localStorage.clear();
+    // Optionally redirect to login or home page
+    window.location.href = "/";
+  };
 
   return (
     <nav className="bg-background border-b">
@@ -19,30 +24,30 @@ export function DashboardNavbar() {
             <Link to="/" className="flex-shrink-0 flex items-center">
               <Shield className="h-8 w-8 text-primary" />
               <span className="ml-2 text-2xl font-bold text-primary">
-                CrimeTrack
+                PIRMS
               </span>
             </Link>
           </div>
-          {userRole === "ADMIN" && ( // Ensure the dropdown only shows for admin
-            <div className="flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link to="/SignUp">add investigator</Link>
-                  </DropdownMenuItem>
-                  {/* <DropdownMenuItem asChild>
-                    <Link to="/criminals">Criminals</Link>
-                  </DropdownMenuItem> */}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
+
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleLogout}>Logout</Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  {userRole === "ADMIN" && (
+                    <Link to="/SignUp">Add Investigator</Link>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </nav>

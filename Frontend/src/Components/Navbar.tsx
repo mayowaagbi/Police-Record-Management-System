@@ -17,7 +17,7 @@ export function Navbar() {
             <Link to="/Dashboard" className="flex-shrink-0 flex items-center">
               <Shield className="h-8 w-8 text-primary" />
               <span className="ml-2 text-2xl font-bold text-primary">
-                CrimeTrack
+                PIRMS
               </span>
             </Link>
           </div>

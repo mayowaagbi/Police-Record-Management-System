@@ -6,17 +6,116 @@ const dotenv = require("dotenv");
 dotenv.config();
 // const jwtSecret = env(JWT_SECRET);
 JWT_SECRET = "e8f3b2d45a7c8e3f9a6b5c1d9f0a2d3b";
+// const registerUser = async (req, res) => {
+//   console.log("Incoming request body:", req.body);
+
+//   const { firstName, lastName, password, email } = req.body.data; // Access data from the "data" field
+
+//   if (!firstName || !lastName || !email || !password) {
+//     console.log("Validation failed: All fields are required.");
+//     return res.status(400).json({ error: "All fields are required." });
+//   }
+
+//   try {
+//     const existingUser = await prisma.investigator.findUnique({
+//       where: { email },
+//     });
+
+//     if (existingUser) {
+//       console.log("User already exists with email:", email);
+//       return res
+//         .status(400)
+//         .json({ error: "User with this email already exists." });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     console.log("Hashed password:", hashedPassword);
+
+//     const newUser = await prisma.investigator.create({
+//       data: {
+//         firstName,
+//         lastName,
+//         email,
+//         password: hashedPassword,
+//       },
+//     });
+
+//     console.log("New user created:", newUser);
+//     res.status(201).json(newUser);
+//   } catch (error) {
+//     console.error("Error during registration:", error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while registering the user." });
+//   }
+// };
+// const registerUser = async (req, res) => {
+//   console.log("Incoming request body:", req.body);
+
+//   const { firstName, lastName, password, email, phone, gender, age } = req.body; // Access data from the "data" field
+
+//   // Check required fields
+//   if (!firstName || !lastName || !email || !password) {
+//     console.log("Validation failed: All fields are required.");
+//     return res
+//       .status(400)
+//       .json({ error: "All required fields must be provided." });
+//   }
+
+//   try {
+//     // Check if the user already exists
+//     const existingUser = await prisma.investigator.findUnique({
+//       where: { email },
+//     });
+
+//     if (existingUser) {
+//       console.log("User already exists with email:", email);
+//       return res
+//         .status(400)
+//         .json({ error: "User with this email already exists." });
+//     }
+
+//     // Hash the password
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     console.log("Hashed password:", hashedPassword);
+
+//     // Create the new user with all fields
+//     const newUser = await prisma.investigator.create({
+//       data: {
+//         firstName,
+//         lastName,
+//         email,
+//         password: hashedPassword,
+//         phone,
+//         gender,
+//         age: parseInt(age, 10),
+//       },
+//     });
+
+//     console.log("New user created:", newUser);
+//     res.status(201).json(newUser);
+//   } catch (error) {
+//     console.error("Error during registration:", error);
+//     res
+//       .status(500)
+//       .json({ error: "An error occurred while registering the user." });
+//   }
+// };
 const registerUser = async (req, res) => {
   console.log("Incoming request body:", req.body);
 
-  const { firstName, lastName, password, email } = req.body.data; // Access data from the "data" field
+  const { firstName, lastName, password, email, phone, gender, dob } = req.body; // Expect "dob"
 
-  if (!firstName || !lastName || !email || !password) {
+  // Check required fields
+  if (!firstName || !lastName || !email || !password || !dob) {
     console.log("Validation failed: All fields are required.");
-    return res.status(400).json({ error: "All fields are required." });
+    return res
+      .status(400)
+      .json({ error: "All required fields must be provided." });
   }
 
   try {
+    // Check if the user already exists
     const existingUser = await prisma.investigator.findUnique({
       where: { email },
     });
@@ -28,15 +127,28 @@ const registerUser = async (req, res) => {
         .json({ error: "User with this email already exists." });
     }
 
+    // Parse and validate the date
+    const parsedDob = new Date(dob);
+    if (isNaN(parsedDob.getTime())) {
+      return res.status(400).json({ error: "Invalid date of birth format." });
+    }
+
+    console.log("Parsed DOB:", parsedDob);
+
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Hashed password:", hashedPassword);
 
+    // Create the new user with all fields
     const newUser = await prisma.investigator.create({
       data: {
         firstName,
         lastName,
         email,
         password: hashedPassword,
+        phone,
+        gender,
+        dob: parsedDob,
       },
     });
 
@@ -49,6 +161,7 @@ const registerUser = async (req, res) => {
       .json({ error: "An error occurred while registering the user." });
   }
 };
+
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
