@@ -272,55 +272,30 @@ const getGenderRatio = async (req, res) => {
       .json({ error: "An error occurred while fetching gender ratio" });
   }
 };
-// const getMonthlyCases = async (req, res) => {
-//   try {
-//     const cases = await prisma.$queryRaw`
-//       SELECT
-//         DATE_FORMAT("createdAt", '%M %Y') AS month,
-//         COUNT(*) AS cases
-//       FROM \`Case\`
-//       GROUP BY month
-//       ORDER BY "createdAt" ASC
-//     `;
+const getMonthlyCases = async (req, res) => {
+  try {
+    const cases = await prisma.$queryRaw`
+      SELECT
+        DATE_FORMAT("createdAt", '%M %Y') AS month,
+        COUNT(*) AS cases
+      FROM \`Case\`
+      GROUP BY month
+      ORDER BY "createdAt" ASC
+    `;
 
-//     // Validate and format the result to handle BigInt serialization issues
-//     const monthlyCases = cases.map((item) => {
-//       return {
-//         month: item.month ? item.month.trim() : "Unknown Month", // Handle null/invalid month
-//         cases: item.cases ? item.cases.toString() : "0", // Convert BigInt to string
-//       };
-//     });
+    // Validate and format the result to handle BigInt serialization issues
+    const monthlyCases = cases.map((item) => {
+      return {
+        month: item.month ? item.month.trim() : "Unknown Month", // Handle null/invalid month
+        cases: item.cases ? item.cases.toString() : "0", // Convert BigInt to string
+      };
+    });
 
-//     res.json(monthlyCases); // Send the result to the frontend
-//   } catch (error) {
-//     console.error("Error fetching monthly cases:", error);
-//     res.status(500).json({ error: "Failed to fetch monthly cases data." });
-//   }
-// };
-const getMonthlyCases = async () => {
-  const cases = await prisma.case.findMany();
-
-  const monthlyCases = cases.reduce((acc, caseItem) => {
-    const month = new Date(caseItem.createdAt).toLocaleString("default", {
-      month: "long",
-    }); // Extract month name
-
-    if (!acc[month]) {
-      acc[month] = 0;
-    }
-
-    acc[month] += 1;
-
-    return acc;
-  }, {});
-
-  // Convert the object into an array of {month, cases} objects
-  const result = Object.keys(monthlyCases).map((month) => ({
-    month,
-    cases: monthlyCases[month].toString(), // Convert to string if needed
-  }));
-
-  return result;
+    res.json(monthlyCases); // Send the result to the frontend
+  } catch (error) {
+    console.error("Error fetching monthly cases:", error);
+    res.status(500).json({ error: "Failed to fetch monthly cases data." });
+  }
 };
 
 module.exports = {

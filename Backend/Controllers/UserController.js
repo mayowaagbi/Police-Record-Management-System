@@ -282,10 +282,31 @@ const getInvestigatorById = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.investigator.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        gender: true,
+        phone: true,
+        dob: true,
+      },
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Failed to fetch users." });
+  }
+};
 module.exports = {
   registerUser,
   loginUser,
   getCriminal,
   addCriminal,
   getInvestigatorById,
+  getAllUsers,
 };

@@ -6,6 +6,7 @@ const {
   addCriminal,
   getCriminal,
   getInvestigatorById,
+  getAllUsers,
 } = require("../Controllers/UserController");
 const verifyAdmin = (req, res, next) => {
   // Get the role from the request header (sent by the client)
@@ -25,6 +26,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/crimmal", addCriminal);
 router.get("/getcrimmal", getCriminal);
+router.get("/getusers", getAllUsers);
 
 router.get("/investigators/:id", getInvestigatorById);
 

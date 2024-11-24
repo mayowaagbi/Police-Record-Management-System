@@ -52,6 +52,7 @@ export default function FilterableDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCase, setSelectedCase] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const [userRole, setUserRole] = useState("user");
 
   // Fetch data and user role on component mount
@@ -76,6 +77,25 @@ export default function FilterableDashboard() {
     fetchData();
     const user = localStorage.getItem("role") || "user";
     setUserRole(user);
+  }, []);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/users/getusers"
+        );
+        const formattedUsers = response.data.map((user: any) => ({
+          ...user,
+          age: calculateAge(user.dob), // Convert dob to age
+        }));
+        setUsers(formattedUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
   }, []);
 
   const handleUpdateEntry = async (updatedEntry: any) => {
@@ -163,12 +183,84 @@ export default function FilterableDashboard() {
       );
     });
   });
+  const userColumns = [
+    "id",
+    "firstName",
+    "lastName",
+    "email",
+    "role",
+    "age",
+    "phone",
+    "gender",
+  ] as const;
+  const calculateAge = (dob: string): number => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
+  const filteredUsers = users.filter((user) =>
+    Object.values(user).some((value) =>
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
 
   return (
     <div className="max-w-[100%] h-screen">
       <DashboardNavbar />
-      <RatioPieChart />
-      <MonthlyBarChart />
+      {userRole === "ADMIN" && (
+        <>
+          <div className="flex justify-center space-x-4 border-slate-950 p-0 m-0">
+            <RatioPieChart />
+            <MonthlyBarChart />
+          </div>
+          <Card className="rounded-none border-0">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Users</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <Input
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <Table className="h-screen">
+                <TableHeader>
+                  <TableRow>
+                    {userColumns.map((column) => (
+                      <TableHead key={column}>
+                        {column.charAt(0).toUpperCase() + column.slice(1)}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user, index) => (
+                    <TableRow key={index}>
+                      {userColumns.map((column) => (
+                        <TableCell key={`${index}-${column}`}>
+                          {user[column]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
       <Card className="rounded-none border-0">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Data Table</CardTitle>
